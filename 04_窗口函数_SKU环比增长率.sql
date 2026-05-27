@@ -1,3 +1,110 @@
+CREATE TABLE daily_sales2(
+    sale_date   DATE,
+    gmv         DECIMAL(15,2),  -- 当日成交金额
+    buyers      INT,             -- 成交人数
+    items       INT,             -- 成交件数
+    orders      INT              -- 成交父单量
+);
+-- 5.1-5.8成交数据
+INSERT INTO daily_sales2(sale_date, gmv, buyers, items, orders)
+VALUES
+('2026-05-01', 1785501.30, 266, 288, 272),
+('2026-05-02', 1938607.30, 280, 297, 286),
+('2026-05-03', 1036673.70, 154, 188, 155),
+('2026-05-04', 1040949.20, 166, 179, 169),
+('2026-05-05', 988470.20, 152, 157, 154),
+('2026-05-06', 1414644.90, 197, 207, 200),
+('2026-05-07', 1267454.50, 197, 216, 206),
+('2026-05-08', 1096346.60, 165, 180, 170);
+
+-- 5.8-5.15成交数据
+INSERT INTO daily_sales2 (sale_date, gmv, buyers, items, orders)
+VALUES
+('2026-05-08', 1096346.60, 165, 180, 170),
+('2026-05-09', 956106.70, 145, 154, 148),
+('2026-05-10', 868339.60, 132, 140, 133),
+('2026-05-11', 1001087.90, 154, 185, 158),
+('2026-05-12', 1049292.10, 160, 182, 165),
+('2026-05-13', 2968781.10, 414, 465, 425),
+('2026-05-14', 2143298.90, 310, 343, 318),
+('2026-05-15', 2761470.50, 406, 433, 411);
+
+-- 5.15-5.22成交数据
+INSERT INTO daily_sales2 (sale_date, gmv, buyers, items, orders)
+VALUES
+('2026-05-15', 2761470.50, 406, 433, 411),
+('2026-05-16', 2061690.50, 320, 339, 323),
+('2026-05-17', 1729860.00, 253, 277, 256),
+('2026-05-18', 3167837.00, 454, 495, 467),
+('2026-05-19', 3974594.10, 551, 582, 556),
+('2026-05-20', 14523102.60, 1752, 1796, 1764),
+('2026-05-21', 3178406.90, 434, 457, 443),
+('2026-05-22', 3249407.20, 426, 477, 432);
+
+-- ==================================================
+-- 分析主题：618期间累计GMV趋势分析
+-- 数据来源：daily_sales 表
+-- 数据范围：2026.6.1 - 2026.6.18
+-- 分析目的：
+--     统计每日累计GMV变化趋势，
+--     观察大促爆发节点与销售增长速度
+-- 核心函数：
+--     SUM(gmv) OVER(
+--         ORDER BY sale_date
+--         ROWS BETWEEN UNBOUNDED PRECEDING
+--         AND CURRENT ROW)
+-- 函数逻辑：
+-- ORDER BY sale_date
+--     → 按日期顺序进行累计
+-- UNBOUNDED PRECEDING
+--     → 从第一行开始
+-- CURRENT ROW
+--     → 累计到当前行为止
+-- ROWS BETWEEN UNBOUNDED PRECEDING
+-- AND CURRENT ROW
+--     → 从第一天累计到今天
+-- SUM(gmv) OVER(...)
+--     → 计算累计GMV（Running Total）
+-- ROUND(... / 10000, 2)
+--     → 将GMV转换为“万元”
+--     → 保留两位小数，方便报表展示
+-- 输出字段说明：
+-- sale_date
+--     → 销售日期
+-- daily_gmv
+--     → 当日GMV
+-- cumulative_gmv
+--     → 截止当天的累计GMV
+-- cumulative_gmv_wan
+--     → 万元单位累计GMV
+--
+-- 业务价值：
+-- 1. 观察618期间销售增长趋势
+-- 2. 判断哪一天开始出现爆发增长
+-- 3. 分析大促节奏与转化效率
+-- 4. 为供应链备货与库存调度提供依据
+-- 5. 可导出为折线图制作运营复盘报告
+--
+-- 结论：
+-- 【填写，如：
+-- “5.19后累计GMV斜率明显上升，
+-- 说明直播活动带来明显销量爆发”】
+
+select
+      sale_date,
+      gmv as daily_gmv,
+      sum(gmv) over (order by sale_date rows between unbounded preceding and current row) as cumulative_gmv,
+      round(
+            sum(gmv) over (order by sale_date rows between unbounded preceding and current row))
+	/ 10000 , 2
+    from daily_sales2
+    order by sale_date;
+    
+
+      
+
+
+
 -- 商品分析表（按SKU）
 CREATE TABLE product_sales2 (
     period      VARCHAR(20),     -- 数据周期 如'5.10-5.15'
